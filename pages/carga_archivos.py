@@ -1,17 +1,17 @@
 import streamlit as st
+from pathlib import Path
 
 from core.excel_reader import leer_excel
 
-
-ENCUESTAS = [
-    "Consulta Externa",
-    "Hospitalización",
-    "Cirugía",
-    "Imágenes Diagnósticas",
-    "Laboratorio",
-    "Rehabilitación",
-    "Urgencias"
-]
+ARCHIVOS = {
+    "Consulta Externa": "Consulta_Externa.xlsx",
+    "Hospitalización": "Hospitalizacion.xlsx",
+    "Cirugía": "Cirugia.xlsx",
+    "Imágenes Diagnósticas": "Imagenes.xlsx",
+    "Laboratorio": "Laboratorio.xlsx",
+    "Rehabilitación": "Rehabilitacion.xlsx",
+    "Urgencias": "Urgencias.xlsx",
+}
 
 
 def mostrar_carga_archivos():
@@ -19,44 +19,29 @@ def mostrar_carga_archivos():
     if "archivos" not in st.session_state:
         st.session_state["archivos"] = {}
 
-    st.subheader("📂 Gestión de archivos")
+    st.subheader("📂 Estado de las encuestas")
 
-    for encuesta in ENCUESTAS:
+    for encuesta, archivo in ARCHIVOS.items():
 
-        col1, col2 = st.columns([3,2])
+        ruta = Path("datos") / archivo
 
-        with col1:
+        try:
 
-            if encuesta in st.session_state["archivos"]:
+            df = leer_excel(ruta)
 
-                df = st.session_state["archivos"][encuesta]
+            st.session_state["archivos"][encuesta] = df
 
-                st.success(f"✅ {encuesta} ({len(df)} registros)")
+            st.success(f"✅ {encuesta} ({len(df)} registros)")
 
-            else:
+        except Exception:
 
-                st.error(f"❌ {encuesta}")
+            st.error(f"❌ No se encontró {archivo}")
 
-        with col2:
-
-            archivo = st.file_uploader(
-                "",
-                type="xlsx",
-                key=f"file_{encuesta}"
-            )
-
-            if archivo is not None:
-
-                df = leer_excel(archivo)
-
-                st.session_state["archivos"][encuesta] = df
 
 def obtener_dataframe(encuesta):
 
-    if encuesta in st.session_state["archivos"]:
+    return st.session_state["archivos"].get(encuesta)
 
-        return st.session_state["archivos"][encuesta]
-
-    return None
 
 mostrar_carga_archivos()
+
